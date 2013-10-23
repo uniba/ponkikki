@@ -1,0 +1,2 @@
+var vc_setting = {
+}
