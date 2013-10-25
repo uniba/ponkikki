@@ -3,6 +3,17 @@ var ytplayer;
 function onYouTubePlayerReady(player) {
 	ytplayer = document.getElementById("myytplayer");
 	console.log("get");
+  	ytplayer.addEventListener("onStateChange", "onytplayerStateChange");
+	//ytplayer.playVideo();
+}
+function onytplayerStateChange(newState) {
+	console.log(newState);
+	if (newState == 0){
+		vc.resetView();
+	}
+	if (newState == 1){
+		vc.pausePlayer();
+	}
 }
 
 /**
@@ -12,6 +23,7 @@ function onYouTubePlayerReady(player) {
  */
 
 function ViewController() {
+
 	this.videoctx;
 	this.drawctx;
 	this.bufferctx;
@@ -40,11 +52,15 @@ function ViewController() {
 	this.pos;
 
 
-	this.mode = 0; // 0:paint 1:window
+	this.mode = 1; // 0:paint 1:window
 	this.isTap = false;
 
 	this.maskZoom = 1;
 	this.startZoom = false;
+	this.zoomEnd = false;
+	this.videoVisible = false;
+	this.prepos = {};
+
 }
 
 ViewController.prototype.init = function(){
@@ -77,11 +93,7 @@ ViewController.prototype.init = function(){
     this.maskctx = this.maskcanvas.getContext("2d");
   	//this.drawctx.globalCompositeOperation = "lighter";
 
-    var params = { allowScriptAccess: "always" };
-    var atts = { id: "myytplayer" };
-    var url = "http://www.youtube.com/v/86svBvIvIq8?enablejsapi=1&playerapiid=ytplayer&loop=1&theme=dark&autohide=1";
-    swfobject.embedSWF(url, "myplayer", this.width, this.height, "8", null, null, params, atts); 
-    //swfobject.embedSWF(url, "myplayer", "500", "400", "8", null, null, params, atts); 
+  	this.setPlayer(vc_setting.urls[15]);
 
     var cammeraStream = null;
     var timeout = 1000 / 30;
@@ -89,6 +101,8 @@ ViewController.prototype.init = function(){
 
     this.initBind();
     this.initLeap();
+
+    $("#mode-button").click();
     
     //ブラウザ間で仕様が違うらしいオブジェクト
     var windowURL = window.URL || window.webkitURL;
@@ -104,15 +118,6 @@ ViewController.prototype.init = function(){
         return;
     }
     
-    //ストップボタンで止めれるようにしておく
-    $("#stopButton").click(function() {
-    	//キャプチャの停止
-        isCapturing = false;
-        //カメラの停止
-        if (cammeraStream == null) return;
-        cammeraStream.stop();
-    });
-    
     
     //定周期で、videoをcanvasにキャプチャし、
     //さらにcanvasをimgに変換する(これで送信可能なキャプチャデータになってるはず)
@@ -121,7 +126,11 @@ ViewController.prototype.init = function(){
     	//context.transform(1, 0, 0, -1, 0, 1280);
     	self.videoctx.save();
 		self.videoctx.scale(-1, 1);
-        self.videoctx.drawImage(video, 0, 0, -self.cwidth, self.cheight);
+		var ratio = self.height / self.width;
+		var offset = (self.cheight - self.cwidth * ratio) / 2;
+        self.videoctx.drawImage(video, 
+        	0, offset, self.cwidth, self.cheight - 2 * offset,
+        	0, 0, -self.cwidth, self.cheight);
 		self.videoctx.scale(-1, 1);
         self.videoctx.globalCompositeOperation = 'destination-out';
         var offsetX = self.cwidth / 2 * (1 - 1 / self.maskZoom);
@@ -134,7 +143,12 @@ ViewController.prototype.init = function(){
 
         if (self.startZoom){
         	self.maskZoom *= 1.05;
-        	if (self.maskZoom > 10) self.maskZoom = 10;
+        	if (self.maskZoom > 10) {
+        		console.log("zoomend");
+        		self.maskZoom = 10;
+        		self.startZoom = false;
+        		self.zoomEnd = true;
+        	}
         }
         setTimeout(capture, timeout);
     };
@@ -165,14 +179,6 @@ ViewController.prototype.initBind = function(){
 	// 	self.drawctx.fillStyle = "rgb(0, 255, 255)";
 	// 	self.drawctx.fillRect(e.clientX / self.width * self.cwidth - 5,e.clientY / self.height * self.cheight - 5,10,10);
 	// });
-	$("#caribButton").click(function(){
-		self.isCarib = !self.isCarib;
-		if (self.isCarib){
-			$("div.carib-elem").show();
-		}else{
-			$("div.carib-elem").hide();
-		}
-	});
 
 	$("button.carib-set-button").click(function(){
 		var num = Number($(this).attr("name"));
@@ -198,18 +204,43 @@ ViewController.prototype.initBind = function(){
 	$("#mode-button").click(function(){
 		self.mode = 1 - self.mode;
 		if (self.mode == 0){
+			self.maskctx.strokeStyle = "rgb(0, 0, 0)";
+			self.maskctx.fillStyle = "rgb(0, 0, 0)";
+    		self.maskctx.lineCap = "square";
+			self.maskctx.lineWidth = vc_setting.strokeWidth;
 			$(this).text("mode 0");
 		}else{
+			self.maskctx.strokeStyle = "rgb(0, 0, 0)";
+			self.maskctx.fillStyle = "rgb(0, 0, 0)";
+			self.maskctx.lineWidth = 10;
 			$(this).text("mode 1");
 		}
 	});
 	$("#reset-button").click(function(){
 		self.maskctx.clearRect(0, 0, self.cwidth, self.cheight);
 	});
+	$("#all-reset-button").click(function(){
+		self.resetView();
+	});
+	$(window).keydown(function(e){
+		console.log(e.keyCode);
+		if (e.keyCode == 13){
+			$("#mode-button").click();
+		}
+		if (e.keyCode == 27){
+			self.resetView();
+		}
+		if (e.keyCode == 32){
+			$("#ui").toggle();
+		}
+	});
 }
 ViewController.prototype.initLeap = function(){
 	var self = this;
 	Leap.loop({enableGestures: true}, function(frame){
+		if (self.startZoom){
+			return;
+		}
 		if (self.mode == 0){
 		    self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
 			if (frame.fingers[0]){
@@ -227,21 +258,41 @@ ViewController.prototype.initLeap = function(){
 						y - 5,
 						10,10);
 					if (self.isStart){
-						self.maskctx.fillStyle = "rgb(255, 150, 150)";
-						self.maskctx.beginPath();
-						self.maskctx.arc(x, y, 30, 0, 2 * Math.PI, true);
-						self.maskctx.fill();
 						if (!self.isTap){
 							self.isTap = true;
-							console.log("video start");
-							ytplayer.playVideo();
+							self.prepos.x = x;
+							self.prepos.y = y;
+						}
+						else{
+							self.maskctx.beginPath();
+							self.maskctx.moveTo(self.prepos.x, self.prepos.y);
+							self.maskctx.lineTo(x,y);
+							self.maskctx.stroke();
+							self.prepos.x = x;
+							self.prepos.y = y;
 						}
 					}
 				}
 				else{
-					if (self.isStart && self.isTap){
+					if (self.isStart && self.isTap && !self.startZoom){
 						self.isTap = false;
-						setInterval(function(){self.startZoom = true}, 1000);
+						if (self.zoomEnd){
+							self.zoomEnd = false;
+							self.startZoom = false;
+							self.resetView();
+						}
+						else{
+							var centerData = self.maskctx.getImageData(288,216,64,48);
+							for (var i = 0; i < 64 * 48; ++i){
+								var data = centerData.data[i * 4 + 3];
+								if (data != 255) return;
+							}
+							self.videoVisible = true;
+							console.log("video start");
+							ytplayer.playVideo();
+							console.log("startzoom");
+							setTimeout(function(){self.startZoom = true}, 1000);
+						}
 					}
 				}
 			}
@@ -262,7 +313,6 @@ ViewController.prototype.initLeap = function(){
 					var y = self.cheight * 0.9 - (pos[1] - self.caribValue[1][1]) * self.caribValue[2].rateY;
 					if (self.isStart){
 						if (!self.isTap){
-							self.maskctx.fillStyle = "rgb(255, 150, 150)";
 							self.isTap = true;
 							self.maskctx.beginPath();
 							self.maskctx.moveTo(x,y);
@@ -277,12 +327,29 @@ ViewController.prototype.initLeap = function(){
 					self.drawctx.fill();
 				}
 				else{
-					if (self.isStart && self.isTap){
-						self.maskctx.closePath();
-						self.maskctx.fill();
-						ytplayer.playVideo();
-						setInterval(function(){self.startZoom = true}, 1000);
+					if (self.isStart && self.isTap && !self.startZoom){
 						self.isTap = false;
+						if (self.zoomEnd){
+							self.zoomEnd = false;
+							self.startZoom = false;
+							self.resetView();
+						}
+						else{
+							self.maskctx.closePath();
+							self.maskctx.fill();
+						    self.bufferctx.clearRect(0, 0, self.cwidth, self.cheight);
+						    self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
+							var centerData = self.maskctx.getImageData(288,216,64,48);
+							for (var i = 0; i < 64 * 48; ++i){
+								var data = centerData.data[i * 4 + 3];
+								if (data != 255) return;
+							}
+						    self.videoVisible = true;
+							console.log("video start");
+							ytplayer.playVideo();
+							console.log("startzoom");
+							setTimeout(function(){self.startZoom = true}, 1000);
+						}
 					}
 				}
 			}
@@ -315,4 +382,28 @@ ViewController.prototype.updateStat = function(_pos){
 			.css("width",maxsize)
 			.css("height",maxsize);
 	}
+}
+ViewController.prototype.resetView = function(){
+	var id = Math.floor(Math.random() * vc_setting.urls.length);
+	this.maskZoom = 1;
+	this.startZoom = false;
+	this.zoomEnd = false;
+	this.videoVisible = false;
+	this.maskctx.clearRect(0, 0, this.cwidth, this.cheight);
+	this.setVideoId(vc_setting.urls[id]);
+}
+ViewController.prototype.pausePlayer = function(_id){
+	console.log("pause" + this.videoVisible);
+	if (!this.videoVisible) ytplayer.pauseVideo();
+}
+
+ViewController.prototype.setPlayer = function(_id){
+    var params = { allowScriptAccess: "always" };
+    var atts = { id: "myytplayer" };
+    var url = "http://www.youtube.com/v/"+ _id +"?enablejsapi=1&playerapiid=ytplayer&loop=1&showinfo=0&theme=dark&autohide=1";
+    swfobject.embedSWF(url, "myplayer", this.width, this.height, "8", null, null, params, atts); 
+
+}
+ViewController.prototype.setVideoId = function(_id){
+	ytplayer.loadVideoById(_id);
 }

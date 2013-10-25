@@ -1,2 +1,21 @@
 var vc_setting = {
+	"urls":[
+		"_zZzca5j3hU",
+		"eQqkn0-cUhI",
+		"rWJJxNz_kw0",
+		"AyRujKbL_hg",
+		"jlGmJKKWyro",
+		"TDs69vJAwxE",
+		"wk_EftR88HU",
+		"RGdvaMYIXvE",
+		"plZDtyeYQNA",
+		"6AAzfNdpKEw",
+		"vFND4ucL9c8",
+		"X_e8AnrRQNg",
+		"Y7mYMp3Pgcw",
+		"NcLGQa6U2Vs",
+		"zTuzpaYHp9M",
+		"34l1bJ2pvuM"
+	],
+	"strokeWidth":80
 }

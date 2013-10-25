@@ -21,10 +21,11 @@
     <script src="./js/setting.js"></script>
     <script type="text/javascript" src="./lib/swfobject.js"></script>
     <script>
-      $(function() {
-        var vc = new ViewController();
-        vc.init();
-      });
+        var vc;
+        $(function() {
+            vc = new ViewController();
+            vc.init();
+        });
     </script>
 </head>
 <body>
@@ -36,17 +37,19 @@
     <canvas class='canvas-base' id="buffer-canvas"></canvas>
     <canvas class='canvas-base' id="mask-canvas"></canvas>
     <div class='stat-circle' id='stat-circle'></div>
+    <div class='logo' id='logo'></div>
 
-    <button id="stopButton">stop</button>
-    <button id="caribButton">caribration</button>
-    <button class='carib-set-button' id="carib-button-0" name='0'>0</button>
-    <button class='carib-set-button' id="carib-button-1" name='1'>1</button><br>
-    <button class='mode-button' id="mode-button">mode 0</button>
-    <button class='start-button' id="start-button">start</button>
-    <button class='reset-button' id="reset-button">mask reset</button>
+    <div class='ui' id='ui'>
+        <div class='carib-circle carib-elem' id='carib-circle-1'>0</div>
+        <div class='carib-circle carib-elem' id='carib-circle-2'>1</div>
+        <div class='carib-stat carib-elem' id='carib-stat'></div>
+        <button class='carib-set-button' id="carib-button-0" name='0'>0</button>
+        <button class='carib-set-button' id="carib-button-1" name='1'>1</button><br>
+        <button class='mode-button' id="mode-button">mode 1</button><br>
+        <button class='start-button' id="start-button">start</button><br>
+        <button class='reset-button' id="reset-button">mask reset</button><br>
+        <button class='all-reset-button' id="all-reset-button">all reset</button><br>
+    </div>
 
-    <div class='carib-circle carib-elem' id='carib-circle-1'>0</div>
-    <div class='carib-circle carib-elem' id='carib-circle-2'>1</div>
-    <div class='carib-stat carib-elem' id='carib-stat'></div>
   </div>
 </body>
