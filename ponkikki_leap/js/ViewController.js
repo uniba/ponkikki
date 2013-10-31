@@ -42,8 +42,8 @@ function ViewController() {
 	this.isCarib = false;
 	this.isStart = false;
 	this.caribValue = [
-		[-170,330,-10],
-		[170,160,-10],
+		[-128,400,-10],
+		[128,200,-10],
 		{
 			"rateX":2,
 			"rateY":2
@@ -60,6 +60,9 @@ function ViewController() {
 	this.zoomEnd = false;
 	this.videoVisible = false;
 	this.prepos = {};
+	this.prenewpos = {};
+
+	this.sqValue = 0;
 
 }
 
@@ -142,10 +145,11 @@ ViewController.prototype.init = function(){
         self.videoctx.restore();
 
         if (self.startZoom){
-        	self.maskZoom *= 1.05;
-        	if (self.maskZoom > 10) {
+        	self.maskZoom *= 1.04;
+        	if (self.maskZoom > 40) {
         		console.log("zoomend");
-        		self.maskZoom = 10;
+				$("#returntext").fadeIn(300);
+        		self.maskZoom = 40;
         		self.startZoom = false;
         		self.zoomEnd = true;
         	}
@@ -202,18 +206,30 @@ ViewController.prototype.initBind = function(){
 	});
 
 	$("#mode-button").click(function(){
-		self.mode = 1 - self.mode;
+		self.mode++;
+		if (self.mode > 2) self.mode = 0;
 		if (self.mode == 0){
 			self.maskctx.strokeStyle = "rgb(0, 0, 0)";
 			self.maskctx.fillStyle = "rgb(0, 0, 0)";
     		self.maskctx.lineCap = "square";
 			self.maskctx.lineWidth = vc_setting.strokeWidth;
 			$(this).text("mode 0");
-		}else{
+			$("#text").html("P-kiesタッチ！<br>画面の前で指を動かしてみよう！");
+		}else if (self.mode == 1){
 			self.maskctx.strokeStyle = "rgb(0, 0, 0)";
 			self.maskctx.fillStyle = "rgb(0, 0, 0)";
 			self.maskctx.lineWidth = 10;
 			$(this).text("mode 1");
+			$("#text").html("P-kiesウィンドウ！<br>画面の前で四角を描いてみよう！");
+		}else{
+			self.maskctx.strokeStyle = "rgb(0, 0, 0)";
+			self.maskctx.fillStyle = "rgb(0, 0, 0)";
+			self.maskctx.lineWidth = 10;
+			self.drawctx.strokeStyle = "rgb(255, 255, 255)";
+			self.drawctx.lineCap = "round";
+			self.drawctx.lineWidth = 8;
+			$(this).text("mode 2");
+			$("#text").html("P-kiesウィンドウ！<br>画面の前で四角を描いてみよう！");
 		}
 	});
 	$("#reset-button").click(function(){
@@ -241,9 +257,16 @@ ViewController.prototype.initLeap = function(){
 		if (self.startZoom){
 			return;
 		}
+		if (frame.fingers[3]){
+			//if (frame.fingers[0].tipPosition[1] < self.caribValue[1][1] * 0.8){
+				self.zoomEnd = false;
+				self.startZoom = false;
+				self.resetView();
+			//}
+		}
 		if (self.mode == 0){
 		    self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
-			if (frame.fingers[0]){
+			if (frame.fingers.length == 1){
 				var finger = frame.fingers[0];
 				var pos = finger.tipPosition;
 				var rate = 4;
@@ -277,9 +300,9 @@ ViewController.prototype.initLeap = function(){
 					if (self.isStart && self.isTap && !self.startZoom){
 						self.isTap = false;
 						if (self.zoomEnd){
-							self.zoomEnd = false;
-							self.startZoom = false;
-							self.resetView();
+							// self.zoomEnd = false;
+							// self.startZoom = false;
+							// self.resetView();
 						}
 						else{
 							var centerData = self.maskctx.getImageData(288,216,64,48);
@@ -291,6 +314,7 @@ ViewController.prototype.initLeap = function(){
 							console.log("video start");
 							ytplayer.playVideo();
 							console.log("startzoom");
+							$("#text").fadeOut(300);
 							setTimeout(function(){self.startZoom = true}, 1000);
 						}
 					}
@@ -303,7 +327,7 @@ ViewController.prototype.initLeap = function(){
 		    self.drawctx.globalAlpha = 0.98;
 		    self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
 		    self.drawctx.drawImage(self.buffercanvas, 0, 0);
-			if (frame.fingers[0]){
+			if (frame.fingers.length == 1){
 				var finger = frame.fingers[0];
 				var pos = finger.tipPosition;
 				var rate = 4;
@@ -330,9 +354,9 @@ ViewController.prototype.initLeap = function(){
 					if (self.isStart && self.isTap && !self.startZoom){
 						self.isTap = false;
 						if (self.zoomEnd){
-							self.zoomEnd = false;
-							self.startZoom = false;
-							self.resetView();
+							// self.zoomEnd = false;
+							// self.startZoom = false;
+							// self.resetView();
 						}
 						else{
 							self.maskctx.closePath();
@@ -348,7 +372,103 @@ ViewController.prototype.initLeap = function(){
 							console.log("video start");
 							ytplayer.playVideo();
 							console.log("startzoom");
+							$("#text").fadeOut(300);
 							setTimeout(function(){self.startZoom = true}, 1000);
+						}
+					}
+				}
+			}
+		}
+		if (self.mode == 2){
+		    // self.bufferctx.clearRect(0, 0, self.cwidth, self.cheight);
+		    // self.bufferctx.drawImage(self.drawcanvas, 0, 0);
+		    // self.drawctx.globalAlpha = 0.98;
+		    // self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
+		    // self.drawctx.drawImage(self.buffercanvas, 0, 0);
+			if (frame.fingers.length == 1){
+				var finger = frame.fingers[0];
+				var pos = finger.tipPosition;
+				var rate = 4;
+				//console.log(pos);
+				self.updateStat(pos);
+				if (pos[2] < 0){
+					var x = self.cwidth * 0.1 + (pos[0] - self.caribValue[0][0]) * self.caribValue[2].rateX;
+					var y = self.cheight * 0.9 - (pos[1] - self.caribValue[1][1]) * self.caribValue[2].rateY;
+					if (self.isStart){
+						var newpos = self.getSquarePos(self.sqValue);
+						self.drawctx.beginPath();
+						self.drawctx.moveTo(self.prenewpos.x, self.prenewpos.y);
+						self.drawctx.lineTo(newpos[0],newpos[1]);
+						self.drawctx.stroke();
+						if (!self.isTap){
+							self.isTap = true;
+							self.prepos.x = x;
+							self.prepos.y = y;
+							self.prenewpos.x = newpos[0];
+							self.prenewpos.y = newpos[1];
+							if (self.sqValue == 0){
+								self.maskctx.beginPath();
+								self.maskctx.moveTo(newpos[0],newpos[1]);
+							}
+						}
+						else{
+							var deltaX = self.prepos.x - x;
+							var deltaY = self.prepos.y - y;
+							var val = 0;
+							switch(newpos[2]){
+								case 0:
+								case 1:
+									val = Math.max(-deltaY, 0);
+									break;
+								case 2:
+									val = Math.max(deltaX, 0);
+									break;
+								case 3:
+									val = Math.max(deltaY, 0);
+									break;
+								case 4:
+									val = Math.max(-deltaX, 0);
+									break;
+								case 5:
+									val = Math.sqrt(Math.pow(deltaX,2) + Math.pow(deltaY,2));
+									break;
+							}
+							val_mini = Math.sqrt(Math.pow(deltaX,2) + Math.pow(deltaY,2));
+							self.sqValue += val * 0.8 + val_mini * 0.1;
+							self.prepos.x = x;
+							self.prepos.y = y;
+							self.prenewpos.x = newpos[0];
+							self.prenewpos.y = newpos[1];
+							self.maskctx.lineTo(newpos[0],newpos[1]);
+						}
+					}
+				}
+				else{
+					if (self.isStart && self.isTap && !self.startZoom){
+						self.isTap = false;
+						if (self.zoomEnd){
+							// self.zoomEnd = false;
+							// self.startZoom = false;
+							// self.resetView();
+						}
+						else{
+							if (self.sqValue > 1000){
+								self.maskctx.closePath();
+								self.maskctx.fill();
+							    self.bufferctx.clearRect(0, 0, self.cwidth, self.cheight);
+							    self.drawctx.clearRect(0, 0, self.cwidth, self.cheight);
+								var centerData = self.maskctx.getImageData(288,216,64,48);
+								for (var i = 0; i < 64 * 48; ++i){
+									var data = centerData.data[i * 4 + 3];
+									if (data != 255) return;
+								}
+								self.videoVisible = true;
+								console.log("video start");
+								ytplayer.playVideo();
+								console.log("startzoom");
+								$("#text").fadeOut(300);
+								setTimeout(function(){self.startZoom = true}, 1000);
+							}
 						}
 					}
 				}
@@ -389,8 +509,11 @@ ViewController.prototype.resetView = function(){
 	this.startZoom = false;
 	this.zoomEnd = false;
 	this.videoVisible = false;
+	this.sqValue = 0;
 	this.maskctx.clearRect(0, 0, this.cwidth, this.cheight);
 	this.setVideoId(vc_setting.urls[id]);
+	$("#text").fadeIn(300);
+	$("#returntext").fadeOut(300);
 }
 ViewController.prototype.pausePlayer = function(_id){
 	console.log("pause" + this.videoVisible);
@@ -406,4 +529,29 @@ ViewController.prototype.setPlayer = function(_id){
 }
 ViewController.prototype.setVideoId = function(_id){
 	ytplayer.loadVideoById(_id);
+}
+ViewController.prototype.getSquarePos = function(_val){
+	var rate = 5;
+	var x = this.cwidth / 2 + this.cwidth / rate;
+	var y = this.cheight / 2 - this.cheight / rate;
+	var phase = 0;
+	if (_val > 0){
+		y += (_val >= 200 ? 200 : _val) / 200 * (this.cheight / rate * 2);
+		phase = 1;
+	}
+	if (_val > 200){
+		x -= (_val >= 500 ? 300 : _val - 200) / 300 * (this.cwidth / rate * 2);
+		phase = 2;
+	}
+	if (_val > 500){
+		y -= (_val >= 700 ? 200 : _val - 500) / 200 * (this.cheight / rate * 2);
+		phase = 3;
+	}
+	if (_val > 700){
+		x += (_val >= 1000 ? 300 : _val - 700) / 300 * (this.cwidth / rate * 2);
+		phase = 4;
+	}
+	x += Math.random() * 4 - 2;
+	y += Math.random() * 4 - 2;
+	return [x,y,phase];
 }
