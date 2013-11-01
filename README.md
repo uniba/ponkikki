@@ -3,11 +3,11 @@ ponkikki
 
 ポンキッキxユニバ展示会用
 
-・設置方法
+・設置方法<br>
 ponkikki_leap以下を任意の場所に置いて下さい
 
-・起動方法
-ponkikki_leapで
+・起動方法<br>
+ponkikki_leapで<br>
 $ node server.js
 でchromeで
 http://localhost:8888/
@@ -56,5 +56,7 @@ SpaceでUIを消す
 ・FAQ
 Leapがおかしい！
 →抜き差し/上のメニューから「デバイスの再調整」
+→「トラッキングの向きの自動調整」はチェックしない。ケーブルは右に出る感じにしてました。（逆向き）
+
 プログラムがおかしい！
 →chrome再起動から
